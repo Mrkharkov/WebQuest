@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Веб-квест — Сокровище найдено!</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <nav class="progress" id="progress" aria-label="Прогресс квеста"></nav>
+
+    <header class="quest-header">
+      <span class="quest-badge">Глава 5 из 5</span>
+      <h1>Сокровищница</h1>
+      <p class="subtitle">Финальная головоломка — разгадай код сокровища</p>
+    </header>
+
+    <main class="card">
+      <p>Ты прошёл все испытания. Остался последний замок. На сундуке надпись:</p>
+      <blockquote class="riddle-text">
+        «Код — это сумма чисел, которые ты видел на пути: первая глава дала тебе одну цифру (число букв в ответе),
+        вторая — количество уровней рун, третья — число букв в слове, четвёртая — размер сетки светильников.
+        Сложи их и введи результат.»
+      </blockquote>
+
+      <p style="font-size: 0.9rem; color: var(--text-muted);">
+        Подсказка к расчёту: 4 + 3 + 11 + 3 = ?
+      </p>
+
+      <div class="input-group">
+        <input type="number" id="code" placeholder="Код сокровища" min="0" autocomplete="off">
+        <button type="button" class="btn btn-primary" id="unlockBtn">Открыть сундук</button>
+      </div>
+      <div id="feedback" class="feedback" role="status"></div>
+    </main>
+
+    <main class="card" id="victoryCard" style="display: none;">
+      <div class="victory-icon" aria-hidden="true">🏆</div>
+      <h2 style="font-family: 'Cinzel', serif; color: var(--gold-light); text-align: center; margin-bottom: 1rem;">
+        Квест завершён!
+      </h2>
+      <p style="text-align: center;">Ты прошёл все пять испытаний и нашёл сокровище.</p>
+      <ul class="treasure-list">
+        <li>Глава 1 — загадка с текстовым ответом</li>
+        <li>Глава 2 — игра на память с цветными рунами</li>
+        <li>Глава 3 — сбор слова из перемешанных букв</li>
+        <li>Глава 4 — логическая головоломка со светильниками</li>
+        <li>Глава 5 — финальный числовой код</li>
+      </ul>
+      <p style="text-align: center;">
+        <a href="index.html" class="restart-link">Начать квест заново →</a>
+      </p>
+    </main>
+
+    <footer>© Веб-квест · Поздравляем, искатель!</footer>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    renderProgress(5);
+    document.querySelectorAll('.progress-dot').forEach((d) => d.classList.add('done'));
+
+    const CORRECT_CODE = 21;
+    const codeInput = document.getElementById('code');
+    const unlockBtn = document.getElementById('unlockBtn');
+    const victoryCard = document.getElementById('victoryCard');
+
+    function unlock() {
+      const value = parseInt(codeInput.value, 10);
+      if (Number.isNaN(value)) {
+        showFeedback('feedback', 'Введите числовой код.', 'error');
+        return;
+      }
+      if (value === CORRECT_CODE) {
+        showFeedback('feedback', 'Сундук открыт!', 'success');
+        unlockBtn.disabled = true;
+        codeInput.disabled = true;
+        setTimeout(() => {
+          document.querySelector('main.card:first-of-type').style.display = 'none';
+          victoryCard.style.display = 'block';
+          victoryCard.scrollIntoView({ behavior: 'smooth' });
+        }, 800);
+      } else {
+        showFeedback('feedback', 'Код неверный. Перечитай подсказку на сундуке.', 'error');
+      }
+    }
+
+    unlockBtn.addEventListener('click', unlock);
+    codeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') unlock();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Веб-квест — Память цветов</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <nav class="progress" id="progress" aria-label="Прогресс квеста"></nav>
+
+    <header class="quest-header">
+      <span class="quest-badge">Глава 2 из 5</span>
+      <h1>Храм рун</h1>
+      <p class="subtitle">Запомни и повтори последовательность светящихся рун</p>
+    </header>
+
+    <main class="card">
+      <p>Страж храма зажигает руны в определённом порядке. Повтори последовательность,
+        чтобы пройти дальше. Нужно пройти <strong>3 уровня</strong> подряд.</p>
+
+      <p class="simon-level" id="levelText">Уровень: 0 / 3</p>
+
+      <div class="simon-grid" id="simonGrid">
+        <button type="button" class="simon-btn red" data-color="0" aria-label="Красная руна"></button>
+        <button type="button" class="simon-btn blue" data-color="1" aria-label="Синяя руна"></button>
+        <button type="button" class="simon-btn green" data-color="2" aria-label="Зелёная руна"></button>
+        <button type="button" class="simon-btn yellow" data-color="3" aria-label="Жёлтая руна"></button>
+      </div>
+
+      <div class="simon-controls">
+        <button type="button" class="btn btn-primary" id="startBtn">Начать испытание</button>
+      </div>
+      <div id="feedback" class="feedback" role="status"></div>
+    </main>
+
+    <footer>© Веб-квест · Слушай внимательно</footer>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    renderProgress(2);
+
+    const COLORS = ['red', 'blue', 'green', 'yellow'];
+    const TARGET_LEVEL = 3;
+    const FLASH_MS = 500;
+    const GAP_MS = 200;
+
+    let sequence = [];
+    let playerStep = 0;
+    let level = 0;
+    let isPlaying = false;
+    let inputEnabled = false;
+
+    const buttons = document.querySelectorAll('.simon-btn');
+    const startBtn = document.getElementById('startBtn');
+    const levelText = document.getElementById('levelText');
+
+    function updateLevelText() {
+      levelText.textContent = `Уровень: ${level} / ${TARGET_LEVEL}`;
+    }
+
+    function setButtonsDisabled(disabled) {
+      buttons.forEach((btn) => { btn.disabled = disabled; });
+    }
+
+    function flashButton(index) {
+      return new Promise((resolve) => {
+        const btn = buttons[index];
+        btn.classList.add('lit');
+        setTimeout(() => {
+          btn.classList.remove('lit');
+          resolve();
+        }, FLASH_MS);
+      });
+    }
+
+    async function playSequence() {
+      isPlaying = true;
+      inputEnabled = false;
+      setButtonsDisabled(true);
+
+      for (let i = 0; i < sequence.length; i++) {
+        await flashButton(sequence[i]);
+        await new Promise((r) => setTimeout(r, GAP_MS));
+      }
+
+      isPlaying = false;
+      inputEnabled = true;
+      setButtonsDisabled(false);
+      showFeedback('feedback', 'Твоя очередь! Повтори последовательность.', 'hint');
+    }
+
+    function startLevel() {
+      sequence.push(Math.floor(Math.random() * 4));
+      playerStep = 0;
+      updateLevelText();
+      playSequence();
+    }
+
+    async function onPlayerClick(colorIndex) {
+      if (!inputEnabled || isPlaying) return;
+
+      await flashButton(colorIndex);
+
+      if (colorIndex !== sequence[playerStep]) {
+        inputEnabled = false;
+        setButtonsDisabled(true);
+        level = 0;
+        sequence = [];
+        updateLevelText();
+        showFeedback('feedback', 'Ошибка! Последовательность сброшена. Начни заново.', 'error');
+        startBtn.disabled = false;
+        startBtn.textContent = 'Попробовать снова';
+        return;
+      }
+
+      playerStep++;
+
+      if (playerStep === sequence.length) {
+        level++;
+        inputEnabled = false;
+        setButtonsDisabled(true);
+
+        if (level >= TARGET_LEVEL) {
+          showFeedback('feedback', 'Испытание пройдено! Храм открывает путь...', 'success');
+          startBtn.disabled = true;
+          goToNextPage('page3.html');
+        } else {
+          showFeedback('feedback', `Уровень ${level} пройден! Следующая последовательность...`, 'success');
+          setTimeout(startLevel, 1200);
+        }
+      }
+    }
+
+    buttons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        onPlayerClick(parseInt(btn.dataset.color, 10));
+      });
+    });
+
+    startBtn.addEventListener('click', () => {
+      if (isPlaying) return;
+      level = 0;
+      sequence = [];
+      startBtn.disabled = true;
+      startBtn.textContent = 'Испытание идёт...';
+      showFeedback('feedback', 'Смотри на руны...', 'hint');
+      updateLevelText();
+      startLevel();
+    });
+
+    setButtonsDisabled(true);
+    updateLevelText();
+  </script>
+</body>
+</html>

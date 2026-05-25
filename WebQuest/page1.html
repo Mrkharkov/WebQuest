@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Веб-квест — Загадка I</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <nav class="progress" id="progress" aria-label="Прогресс квеста"></nav>
+
+    <header class="quest-header">
+      <span class="quest-badge">Глава 1 из 5</span>
+      <h1>Врата тайны</h1>
+      <p class="subtitle">Разгадай загадку, чтобы открыть следующую дверь</p>
+    </header>
+
+    <main class="card">
+      <p>Ты стоишь перед древними вратами. На камне высечена загадка:</p>
+      <blockquote class="riddle-text">
+        «У меня есть города, но нет домов; леса, но нет деревьев; вода, но нет рыбы.
+        Что я?»
+      </blockquote>
+      <p>Введи ответ одним словом на русском языке.</p>
+
+      <div class="input-group">
+        <input type="text" id="answer" placeholder="Ваш ответ..." autocomplete="off" autofocus>
+        <button type="button" class="btn btn-primary" id="checkBtn">Проверить</button>
+      </div>
+      <button type="button" class="btn btn-secondary" id="hintBtn" style="margin-top: 0.75rem;">Подсказка</button>
+      <div id="feedback" class="feedback" role="status"></div>
+    </main>
+
+    <footer>Веб-квест Ивановой Анны ИР-25-3</footer>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    renderProgress(1);
+
+    const CORRECT = ['карта', 'карту'];
+    const answerInput = document.getElementById('answer');
+    const checkBtn = document.getElementById('checkBtn');
+    const hintBtn = document.getElementById('hintBtn');
+
+    function checkAnswer() {
+      const value = normalizeAnswer(answerInput.value);
+      if (!value) {
+        showFeedback('feedback', 'Введите ответ.', 'error');
+        return;
+      }
+      if (CORRECT.includes(value)) {
+        showFeedback('feedback', 'Верно! Врата открываются... Переход на следующую страницу.', 'success');
+        checkBtn.disabled = true;
+        answerInput.disabled = true;
+        goToNextPage('page2.html');
+      } else {
+        showFeedback('feedback', 'Неверно. Подумай ещё — это помогает путешественникам.', 'error');
+      }
+    }
+
+    checkBtn.addEventListener('click', checkAnswer);
+    answerInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkAnswer();
+    });
+
+    hintBtn.addEventListener('click', () => {
+      showFeedback('feedback', 'Подсказка: этим предметом пользуются географы и туристы.', 'hint');
+    });
+  </script>
+</body>
+</html>

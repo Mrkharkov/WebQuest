@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Веб-квест — Световые замки</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <nav class="progress" id="progress" aria-label="Прогресс квеста"></nav>
+
+    <header class="quest-header">
+      <span class="quest-badge">Глава 4 из 5</span>
+      <h1>Зал световых замков</h1>
+      <p class="subtitle">Включи все девять светильников одновременно</p>
+    </header>
+
+    <main class="card">
+      <p>На стене — сетка из 9 светильников. Нажатие на любой переключает его
+        <strong>и соседей по вертикали и горизонтали</strong> (крестом). Зажги все огни!</p>
+
+      <p class="switches-hint">Совет: иногда проще начать с угла.</p>
+
+      <div class="switches-grid" id="switchesGrid" role="grid" aria-label="Сетка светильников"></div>
+
+      <p class="moves-counter" id="movesCounter">Ходов: 0</p>
+
+      <div style="text-align: center; margin-top: 1rem;">
+        <button type="button" class="btn btn-secondary" id="resetBtn">Перемешать</button>
+      </div>
+      <div id="feedback" class="feedback" role="status"></div>
+    </main>
+
+    <footer>© Веб-квест · Свет ведёт к цели</footer>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    renderProgress(4);
+
+    const GRID_SIZE = 3;
+    let lights = [];
+    let moves = 0;
+    let solved = false;
+
+    const gridEl = document.getElementById('switchesGrid');
+    const movesCounter = document.getElementById('movesCounter');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function initLights(randomStart = true) {
+      lights = Array(GRID_SIZE * GRID_SIZE).fill(false);
+
+      if (randomStart) {
+        const scrambleMoves = 8 + Math.floor(Math.random() * 6);
+        for (let i = 0; i < scrambleMoves; i++) {
+          toggleAt(Math.floor(Math.random() * 9), false);
+        }
+        if (lights.every((l) => l)) {
+          toggleAt(0, false);
+        }
+      }
+
+      moves = 0;
+      solved = false;
+      renderGrid();
+      updateMoves();
+      document.getElementById('feedback').classList.remove('show');
+    }
+
+    function toggleAt(index, countMove = true) {
+      const row = Math.floor(index / GRID_SIZE);
+      const col = index % GRID_SIZE;
+      const positions = [
+        index,
+        index - GRID_SIZE,
+        index + GRID_SIZE,
+        col > 0 ? index - 1 : -1,
+        col < GRID_SIZE - 1 ? index + 1 : -1,
+      ];
+
+      positions.forEach((pos) => {
+        if (pos >= 0 && pos < lights.length) {
+          lights[pos] = !lights[pos];
+        }
+      });
+
+      if (countMove) moves++;
+    }
+
+    function checkWin() {
+      if (lights.every((l) => l) && !solved) {
+        solved = true;
+        showFeedback('feedback', 'Все светильники горят! Финальные врата открываются...', 'success');
+        resetBtn.disabled = true;
+        goToNextPage('page5.html');
+      }
+    }
+
+    function renderGrid() {
+      gridEl.innerHTML = '';
+      lights.forEach((on, i) => {
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = `switch-cell${on ? ' on' : ''}`;
+        cell.setAttribute('role', 'gridcell');
+        cell.setAttribute('aria-label', `Светильник ${i + 1}, ${on ? 'включён' : 'выключен'}`);
+        cell.addEventListener('click', () => {
+          if (solved) return;
+          toggleAt(i);
+          renderGrid();
+          updateMoves();
+          checkWin();
+        });
+        gridEl.appendChild(cell);
+      });
+    }
+
+    function updateMoves() {
+      movesCounter.textContent = `Ходов: ${moves}`;
+    }
+
+    resetBtn.addEventListener('click', initLights);
+    initLights();
+  </script>
+</body>
+</html>

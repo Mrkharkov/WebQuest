@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Веб-квест — Собери слово</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <nav class="progress" id="progress" aria-label="Прогресс квеста"></nav>
+
+    <header class="quest-header">
+      <span class="quest-badge">Глава 3 из 5</span>
+      <h1>Библиотека шёпотов</h1>
+      <p class="subtitle">Собери разбросанные буквы в правильное слово</p>
+    </header>
+
+    <main class="card">
+      <p>В древней книге буквы перемешались. Собери слово из <strong>11 букв</strong> —
+        название того, что ты сейчас проходишь (единственное число, средний род).</p>
+
+      <p style="font-size: 0.9rem; color: var(--text-muted);">Нажимай буквы по порядку. Нажми на собранное слово, чтобы отменить последнюю букву.</p>
+
+      <div class="letter-slot" id="answerSlot" aria-label="Собранное слово"></div>
+
+      <div class="letter-pool" id="letterPool"></div>
+
+      <div style="text-align: center; margin-top: 1rem;">
+        <button type="button" class="btn btn-primary" id="checkBtn">Проверить слово</button>
+        <button type="button" class="btn btn-secondary" id="resetBtn" style="margin-left: 0.5rem;">Сбросить</button>
+      </div>
+      <div id="feedback" class="feedback" role="status"></div>
+    </main>
+
+    <footer>© Веб-квест · Буквы не лгут</footer>
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    renderProgress(3);
+
+    const TARGET = 'приключение';
+    const LETTERS = 'приключение'.split('');
+
+    const answerSlot = document.getElementById('answerSlot');
+    const letterPool = document.getElementById('letterPool');
+    const checkBtn = document.getElementById('checkBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let selected = [];
+    let poolLetters = [];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function createTile(letter, source, index) {
+      const tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'letter-tile';
+      tile.textContent = letter.toUpperCase();
+      tile.dataset.letter = letter;
+      tile.dataset.source = source;
+      tile.dataset.index = index;
+      tile.addEventListener('click', () => onTileClick(tile));
+      return tile;
+    }
+
+    function renderPool() {
+      letterPool.innerHTML = '';
+      poolLetters.forEach((item, i) => {
+        if (!item.used) {
+          letterPool.appendChild(createTile(item.letter, 'pool', i));
+        }
+      });
+    }
+
+    function renderAnswer() {
+      answerSlot.innerHTML = '';
+      selected.forEach((item, i) => {
+        const tile = createTile(item.letter, 'answer', i);
+        answerSlot.appendChild(tile);
+      });
+    }
+
+    function onTileClick(tile) {
+      const source = tile.dataset.source;
+      const index = parseInt(tile.dataset.index, 10);
+
+      if (source === 'pool') {
+        if (poolLetters[index].used) return;
+        poolLetters[index].used = true;
+        selected.push({ letter: poolLetters[index].letter, poolIndex: index });
+      } else {
+        if (selected.length === 0) return;
+        const removed = selected.pop();
+        poolLetters[removed.poolIndex].used = false;
+      }
+
+      renderPool();
+      renderAnswer();
+    }
+
+    function resetPuzzle() {
+      selected = [];
+      poolLetters = shuffle(LETTERS).map((letter) => ({ letter, used: false }));
+      renderPool();
+      renderAnswer();
+      showFeedback('feedback', '', '');
+      document.getElementById('feedback').classList.remove('show');
+    }
+
+    function checkWord() {
+      const word = selected.map((s) => s.letter).join('');
+      if (word.length < TARGET.length) {
+        showFeedback('feedback', `Собрано ${word.length} из ${TARGET.length} букв.`, 'error');
+        return;
+      }
+      if (normalizeAnswer(word) === TARGET) {
+        showFeedback('feedback', 'Слово верное! Книга открывает следующую главу...', 'success');
+        checkBtn.disabled = true;
+        resetBtn.disabled = true;
+        goToNextPage('page4.html');
+      } else {
+        showFeedback('feedback', 'Неправильное слово. Попробуй другой порядок букв.', 'error');
+      }
+    }
+
+    checkBtn.addEventListener('click', checkWord);
+    resetBtn.addEventListener('click', resetPuzzle);
+
+    resetPuzzle();
+  </script>
+</body>
+</html>
